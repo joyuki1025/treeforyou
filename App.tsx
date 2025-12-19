@@ -162,7 +162,8 @@ const App: React.FC = () => {
 
   return (
     // Outer Stage: Handles the dark background on PC and centering
-    <div className="w-full h-screen bg-[#020202] flex items-center justify-center overflow-hidden">
+    // Use 100dvh to avoid mobile browser navigation bar blocking content
+    <div className="w-full bg-[#020202] flex items-center justify-center overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
       
       {/* Device Frame: 
           On Mobile: Full width/height.

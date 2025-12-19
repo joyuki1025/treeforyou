@@ -69,6 +69,8 @@ const SceneController: React.FC<{
     const vec = useMemo(() => new THREE.Vector3(), []);
     
     // Interaction State
+    // 镜头高度定义：初始值为32，竖屏模式下自动调整为48
+    // 可以通过修改这里的值来调整镜头的初始高度
     const zoomTarget = useRef(32); 
     const isDragging = useRef(false);
     const lastPointerX = useRef(0);
@@ -92,7 +94,7 @@ const SceneController: React.FC<{
         const aspect = size.width / size.height;
         if (aspect < 1.0) {
             // Portrait: Standard tree height needs ~45-50 distance to fit vertically with 45deg FOV
-            zoomTarget.current = 48;
+            zoomTarget.current = 35;
         } else {
             // Landscape: Standard distance
             zoomTarget.current = 32;
@@ -370,8 +372,10 @@ const Experience: React.FC<ExperienceProps> = (props) => {
     <Canvas
       dpr={[1, 1.25]} 
       // OPTIMIZATION: Tighten near/far planes to increase depth buffer precision on mobile.
-      // 5-80 covers the tree nicely (centered at 0, camera at 32).
-      camera={{ position: [0, 0, 32], fov: 45, near: 5, far: 80 }}
+      // 镜头高度定义位置：camera position 的 z 值（32）控制镜头的初始高度
+      // 可以通过修改这里的 [0, 0, 32] 中的第三个值来调整镜头高度
+      // fov: 45 是视野角度，near: 5 和 far: 80 是渲染范围
+      camera={{ position: [0, 0, 27], fov: 45, near: 5, far: 80 }}
       gl={{ 
         antialias: false, 
         toneMapping: THREE.ACESFilmicToneMapping, 

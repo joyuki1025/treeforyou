@@ -189,9 +189,12 @@ const GestureController: React.FC<GestureControllerProps> = ({ onGesture, isGuiV
 
   return (
     <div 
-      className={`absolute bottom-4 right-4 z-50 transition-all duration-500 ease-in-out ${
+      className={`absolute right-4 z-50 transition-all duration-500 ease-in-out ${
         isGuiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
       }`}
+      style={{ 
+        bottom: 'max(1rem, calc(1rem + env(safe-area-inset-bottom)))'
+      }}
     >
       <div className={`relative ${boxStyle}`}>
           
@@ -199,7 +202,7 @@ const GestureController: React.FC<GestureControllerProps> = ({ onGesture, isGuiV
              <div className="flex flex-col items-center justify-center h-full text-[#d0d0d0] p-2 text-center gap-2">
                 <span className="text-xl">📷</span>
                 <span className="text-[10px] font-sans font-normal">Camera Unavailable</span>
-                <span className="text-[9px] text-white/50">Use mouse instead</span>
+                <span className="text-[9px] text-[#d0d0d0]/70 font-sans font-normal">Use mouse instead</span>
              </div>
           ) : (
             <>
@@ -210,14 +213,14 @@ const GestureController: React.FC<GestureControllerProps> = ({ onGesture, isGuiV
                     className={`w-full h-full object-cover transition-opacity duration-500 ${loading ? 'opacity-20' : 'opacity-80'}`}
                     onUserMediaError={() => setCameraError(true)}
                 />
-                {!loading && <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#d4af37]/10 to-transparent animate-scan pointer-events-none" />}
+                {!loading && <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#d0d0d0]/10 to-transparent animate-scan pointer-events-none" />}
             </>
           )}
           
           {loading && !cameraError && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-[#d4af37] gap-2 p-4 bg-black/80 backdrop-blur-sm">
-                  <div className="w-5 h-5 border-2 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-[9px] font-luxury uppercase tracking-widest text-center animate-pulse">{loadingMessage}</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-[#d0d0d0] gap-2 p-4 bg-black/80 backdrop-blur-sm">
+                  <div className="w-5 h-5 border-2 border-[#d0d0d0] border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-[9px] font-sans font-normal text-center animate-pulse">{loadingMessage}</span>
               </div>
           )}
           
