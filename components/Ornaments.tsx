@@ -470,6 +470,72 @@ const generateCardTexture = () => {
     return new THREE.CanvasTexture(canvas);
 }
 
+// --- Loading State Component for Photos ---
+// Uses the same scaling logic as PhotoFrameMesh to maintain consistent size
+const PhotoLoadingMesh: React.FC<{
+    item: OrnamentData;
+    mixFactor: number;
+}> = ({ item, mixFactor }) => {
+    const groupRef = useRef<THREE.Group>(null);
+    const currentMixRef = useRef(1);
+    
+    const vecPos = useMemo(() => new THREE.Vector3(), []);
+    const vecScale = useMemo(() => new THREE.Vector3(), []);
+    const vecWorld = useMemo(() => new THREE.Vector3(), []);
+
+    useFrame((state, delta) => {
+        if (!groupRef.current) return;
+        const speed = 2.0 * delta;
+        currentMixRef.current = lerp(currentMixRef.current, mixFactor, speed);
+        const t = currentMixRef.current;
+        
+        vecPos.lerpVectors(item.chaosPos, item.targetPos, t);
+        groupRef.current.position.copy(vecPos);
+        
+        vecScale.lerpVectors(item.chaosScale, item.targetScale, t);
+
+        // --- Responsive Scaling Logic (same as PhotoFrameMesh) ---
+        const { width } = state.viewport;
+        const isSmallScreen = width < 22; 
+        
+        const responsiveBaseScale = isSmallScreen ? 0.6 : 1.0;
+        vecScale.multiplyScalar(responsiveBaseScale);
+        // --------------------------------
+        
+        const effectStrength = (1.0 - t);
+        
+        if (t < 0.99) {
+             groupRef.current.getWorldPosition(vecWorld);
+             const distToCamera = vecWorld.distanceTo(state.camera.position);
+             
+             const maxZoom = isSmallScreen ? 1.1 : 1.5; 
+             const minZoom = 0.6;
+
+             const perspectiveFactor = THREE.MathUtils.mapLinear(distToCamera, 10, 60, maxZoom, minZoom);
+             const dynamicScale = lerp(1.0, perspectiveFactor, effectStrength);
+             vecScale.multiplyScalar(dynamicScale);
+        }
+
+        groupRef.current.scale.copy(vecScale);
+
+        if (t > 0.8) {
+             groupRef.current.lookAt(0, groupRef.current.position.y, 0); 
+             groupRef.current.rotateY(Math.PI); 
+        } else {
+             groupRef.current.lookAt(state.camera.position);
+        }
+    });
+
+    return (
+        <group ref={groupRef}>
+            <mesh>
+                <boxGeometry args={[1, 1.2, 0.05]} />
+                <meshStandardMaterial color="#f0f0f0" roughness={0.5} />
+            </mesh>
+        </group>
+    );
+};
+
 const UserPhotoOrnament: React.FC<{
     item: OrnamentData;
     mixFactor: number;
@@ -543,15 +609,8 @@ const UserPhotoOrnament: React.FC<{
     }
 
     if (!texture) {
-        // Loading State: White Card
-        return (
-             <group position={item.targetPos}>
-                <mesh scale={item.targetScale}>
-                    <boxGeometry args={[1, 1.2, 0.05]} />
-                    <meshStandardMaterial color="#f0f0f0" roughness={0.5} />
-                </mesh>
-             </group>
-        );
+        // Loading State: Use PhotoLoadingMesh with same scaling logic as PhotoFrameMesh
+        return <PhotoLoadingMesh item={item} mixFactor={mixFactor} />;
     }
 
     return <PhotoFrameMesh item={item} mixFactor={mixFactor} texture={texture} signatureTexture={signatureTexture} />;

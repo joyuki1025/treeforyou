@@ -185,7 +185,7 @@ const GestureController: React.FC<GestureControllerProps> = ({ onGesture, isGuiV
   }, [model, loading, runDetection]);
 
   // Use absolute instead of fixed to stay inside the app container
-  const boxStyle = "w-40 h-52 md:w-60 md:h-44 rounded-lg border-[#d4af37]/50 bg-black/90 border overflow-hidden shadow-[0_0_20px_rgba(212,175,55,0.2)]";
+  const boxStyle = "w-40 h-52 md:w-60 md:h-44 rounded-lg border-[#d0d0d0] bg-black/90 border overflow-hidden";
 
   return (
     <div 
@@ -196,9 +196,9 @@ const GestureController: React.FC<GestureControllerProps> = ({ onGesture, isGuiV
       <div className={`relative ${boxStyle}`}>
           
           {cameraError ? (
-             <div className="flex flex-col items-center justify-center h-full text-[#d4af37] p-2 text-center gap-2">
+             <div className="flex flex-col items-center justify-center h-full text-[#d0d0d0] p-2 text-center gap-2">
                 <span className="text-xl">📷</span>
-                <span className="text-[10px] font-luxury uppercase tracking-widest">Camera Unavailable</span>
+                <span className="text-[10px] font-sans font-normal">Camera Unavailable</span>
                 <span className="text-[9px] text-white/50">Use mouse instead</span>
              </div>
           ) : (
@@ -221,9 +221,9 @@ const GestureController: React.FC<GestureControllerProps> = ({ onGesture, isGuiV
               </div>
           )}
           
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent pt-6 pb-2 px-3 flex flex-col md:flex-row justify-end md:justify-between items-start md:items-end gap-0 md:gap-0">
-            <span className="text-[9px] md:text-[8px] text-[#d4af37]/80 font-luxury tracking-widest uppercase mb-0.5 md:mb-0">Sensors</span>
-            <span className={`text-[11px] md:text-[9px] font-mono font-bold ${debugState.includes("OPEN") ? "text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" : "text-[#d4af37]"}`}>
+          <div className="absolute top-0 left-0 right-0 pb-2 pt-1.5 px-3 flex flex-col md:flex-row justify-start md:justify-between items-start md:items-start gap-1 md:gap-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 25%, transparent 50%)' }}>
+            <span className="text-[9px] md:text-[8px] text-[#d0d0d0] font-sans font-normal">Sensors</span>
+            <span className={`text-[11px] md:text-[9px] font-sans font-normal text-[#d0d0d0]`}>
                 {debugState}
             </span>
           </div>
