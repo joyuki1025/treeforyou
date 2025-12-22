@@ -124,17 +124,53 @@ const generateSignatureTexture = (text: string) => {
     ctx.fillStyle = '#111111'; // Almost Black ink
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
-    // Use the loaded font
-    ctx.font = "bold 60px 'Monsieur La Doulaise', cursive";
-    
-    // Draw
-    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-    
+
+    // Responsive font sizing: pick largest font that fits within canvas width with padding
+    const padding = 20;
+    const maxTextWidth = canvas.width - padding * 2;
+    let fontSize = 60; // starting font size
+    const minFontSize = 18;
+
+    // Try decreasing font size until it fits.
+    const hasChinese = /[\u4E00-\u9FFF]/.test(text);
+    const fontFamilyFallback = hasChinese ? `'Chinese', 'Damion', 'Monsieur La Doulaise', cursive` : `'Damion', 'Monsieur La Doulaise', cursive`;
+    do {
+        ctx.font = `bold ${fontSize}px ${fontFamilyFallback}`;
+        const measured = ctx.measureText(text).width;
+        if (measured <= maxTextWidth) break;
+        fontSize -= 2;
+    } while (fontSize >= minFontSize);
+
+    // If still too wide (very long string), truncate with ellipsis to be safe
+    let renderText = text;
+    if (ctx.measureText(renderText).width > maxTextWidth) {
+        // Truncate characters until it fits with ellipsis
+        while (renderText.length > 0 && ctx.measureText(renderText + '…').width > maxTextWidth) {
+            renderText = renderText.slice(0, -1);
+        }
+        renderText = renderText + '…';
+    }
+
+    // Draw the text centered vertically
+    ctx.font = `bold ${fontSize}px ${fontFamilyFallback}`;
+    ctx.fillText(renderText, canvas.width / 2, canvas.height / 2);
+
     const tex = new THREE.CanvasTexture(canvas);
     tex.needsUpdate = true;
     return tex;
 }
+
+// Default polaroid captions for the 8 default images (will repeat via modulo)
+const DEFAULT_POLAROID_TEXTS = [
+    'Selamat Natal',
+    'Merry Christmas',
+    'Feliz Navidad',
+    'Sugeng Natal',
+    'Wilujeng Natal',
+    "Salama' Natal",
+    'Rahajeng Natal',
+    '圣诞快乐'
+];
 
 // Generate a nice missing texture instead of black
 const generateMissingTexture = () => {
@@ -306,7 +342,18 @@ const PhotoFrameMesh: React.FC<{
 
              if (photoMatRef.current) {
                  const brightness = THREE.MathUtils.mapLinear(distToCamera, 12, 50, 0.9, 0.2);
-                 photoMatRef.current.emissiveIntensity = Math.max(0.2, brightness) * effectStrength;
+                // Prevent overexposure when the photo gets very close to the camera:
+                // - Clamp the computed brightness to a safe range.
+                // - If extremely close, force a conservative emissive intensity.
+                const clampedBrightness = THREE.MathUtils.clamp(brightness, 0.15, 0.8);
+                const extremelyCloseThreshold = 9.0;
+                const targetEmissive = distToCamera < extremelyCloseThreshold
+                    ? 0.25
+                    : Math.max(0.15, clampedBrightness) * effectStrength;
+
+                // Smoothly interpolate emissiveIntensity to avoid popping
+                const current = photoMatRef.current.emissiveIntensity ?? 0.25;
+                photoMatRef.current.emissiveIntensity = lerp(current, targetEmissive, 0.12);
              }
         } else {
              if (photoMatRef.current) photoMatRef.current.emissiveIntensity = 0.25;
@@ -648,6 +695,12 @@ const Ornaments: React.FC<OrnamentsProps> = ({ mixFactor, type, count, colors, s
       return null;
   }, [type, signatureText]);
 
+  // Default signature textures (one per default polaroid text). Generated once for performance.
+  const defaultSignatureTextures = useMemo(() => {
+      if (type !== 'PHOTO') return [];
+      return DEFAULT_POLAROID_TEXTS.map(t => generateSignatureTexture(t));
+  }, [type]);
+
   // Generate specific geometry based on type
   const geometry = useMemo(() => {
       switch(type) {
@@ -846,16 +899,19 @@ const Ornaments: React.FC<OrnamentsProps> = ({ mixFactor, type, count, colors, s
                       if (i < userImages.length) {
                            imgSrc = userImages[i];
                       }
-                  } 
-                  
-                  // Use fallback texture logic? 
-                  // If we have an image URL, we try to load it. 
-                  // If we don't (ran out of images), we use fallback texture.
+                  }
+
+                  // Per-photo signature selection:
+                  // - If user provided a global signatureText, use that (signatureTexture).
+                  // - Otherwise use the default polaroid captions, repeating via modulo.
+                  const perPhotoSignature: THREE.Texture | null = signatureTexture ?? (defaultSignatureTextures.length ? defaultSignatureTextures[i % defaultSignatureTextures.length] : null);
+
+                  // Use fallback texture logic if no image URL is present.
                   if (imgSrc) {
-                      return <UserPhotoOrnament key={i} item={item} mixFactor={mixFactor} url={imgSrc} signatureTexture={signatureTexture} />;
+                      return <UserPhotoOrnament key={i} item={item} mixFactor={mixFactor} url={imgSrc} signatureTexture={perPhotoSignature} />;
                   } else {
                       const fallback = fallbackTextures[i % fallbackTextures.length];
-                      return <PhotoFrameMesh key={i} item={item} mixFactor={mixFactor} texture={fallback} signatureTexture={signatureTexture} />;
+                      return <PhotoFrameMesh key={i} item={item} mixFactor={mixFactor} texture={fallback} signatureTexture={perPhotoSignature} />;
                   }
               })}
           </group>

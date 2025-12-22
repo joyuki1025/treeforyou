@@ -192,8 +192,8 @@ const App: React.FC = () => {
                       {/* Center Star */}
                       <div className="absolute inset-0 flex items-center justify-center text-[#d4af37] text-xl animate-pulse">✦</div>
                   </div>
-                  <div className="text-[#d4af37] font-luxury tracking-[0.25em] text-xs uppercase animate-pulse">
-                      圣诞树装饰中...
+                  <div className="text-[#d4af37] font-damion tracking-[0.25em] text-xs uppercase animate-pulse">
+                      Decorating the tree...
                   </div>
                   <style>{`
                     @keyframes spin-reverse {
